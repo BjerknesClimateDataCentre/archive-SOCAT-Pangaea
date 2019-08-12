@@ -9,8 +9,8 @@ wd=/Users/rpr061/Downloads/SOCATv2019All_ABCDE_enhanced_datafiles
 cd ${wd}/..
 
 # If script has been run before and not clean up (e.g. testing), remove previous files
-if [ -f SOCATv${SOCATv}_InpEvents_FirstLastPosition.txt ]; then
-      rm filedirlist SOCATv${SOCATv}_InpEvents_FirstLastPosition.txt header firstline lastline
+if [ -f SOCATv${SOCATv}_ALL_ABCDE_InpEvents_FirstLastPosition.txt ]; then
+      rm filedirlist SOCATv${SOCATv}_ALL_ABCDE_InpEvents_FirstLastPosition.txt header firstline lastline
 fi
 
 #cd $wd
@@ -75,17 +75,14 @@ lasthour=$(awk -v awkhourcol=$hourcol '{print $awkhourcol}' lastline)
 lastmin=$(awk -v awkmincol=$mincol '{print $awkmincol}' lastline)
 lastsec=$(awk -v awkseccol=$seccol '{print $awkseccol}' lastline)
 
+firstdate=$(echo ${firstyear}-${firstmonth}-${firstday}T${firsthour}:${firstmin}:$(echo ${firstsec} | cut -d'.' -f1)Z)
+lastdate=$(echo ${lastyear}-${lastmonth}-${lastday}T${lasthour}:${lastmin}:$(echo ${lastsec} | cut -d'.' -f1)Z)
+
 # Extract dataset to temporary file; then extract lat and lon columns
 #THIS LINE IS WRONG!!!
 tail -n +$(( $headerline +1 )) $filedir > data.temp
 awk -v awklatcol=$latcol '{print $awklatcol}' data.temp > lat.temp
 awk -v awkloncol=$loncol '{print $awkloncol}' data.temp > lon.temp
-awk -v awkyearcol=$yearcol '{print $awkyearcol}' data.temp > year.temp
-awk -v awkmonthcol=$monthcol '{print $awkmonthcol}' data.temp > month.temp
-awk -v awkdaycol=$daycol '{print $awkdaycol}' data.temp > day.temp
-awk -v awkhourcol=$hourcol '{print $awkhourcol}' data.temp > hour.temp
-awk -v awkmincol=$mincol '{print $awkmincol}' data.temp > min.temp
-awk -v awkseccol=$seccol '{print $awkseccol}' data.temp > sec.temp
 
 minlat=$(sort -nk1,1 lat.temp | head -1 | cut -d ' ' -f3)
 maxlat=$(sort -nrk1,1 lat.temp | head -1 | cut -d ' ' -f3)
@@ -102,26 +99,6 @@ if (( $(echo "$maxlon > 180." | bc -l) )); then
       maxlon=$(echo "${maxlon} - 360." | bc)
 fi
 
-minyear=$(sort -nk1,1 year.temp | head -1 | cut -d ' ' -f3)
-maxyear=$(sort -nrk1,1 year.temp | head -1 | cut -d ' ' -f3)
-
-minmonth=$(sort -nk1,1 month.temp | head -1 | cut -d ' ' -f3)
-maxmonth=$(sort -nrk1,1 month.temp | head -1 | cut -d ' ' -f3)
-
-minday=$(sort -nk1,1 day.temp | head -1 | cut -d ' ' -f3)
-maxday=$(sort -nrk1,1 day.temp | head -1 | cut -d ' ' -f3)
-
-minhour=$(sort -nk1,1 hour.temp | head -1 | cut -d ' ' -f3)
-maxhour=$(sort -nrk1,1 hour.temp | head -1 | cut -d ' ' -f3)
-
-minmin=$(sort -nk1,1 min.temp | head -1 | cut -d ' ' -f3)
-maxmin=$(sort -nrk1,1 min.temp | head -1 | cut -d ' ' -f3)
-
-minsec=$(sort -nk1,1 sec.temp | head -1 | cut -d ' ' -f3)
-maxsec=$(sort -nrk1,1 sec.temp | head -1 | cut -d ' ' -f3)
-
-mindate=$(echo ${minyear}-${minmonth}-${minday}T${minhour}:${minmin}:${minsec}Z)
-maxdate=$(echo ${maxyear}-${maxmonth}-${maxday}T${maxhour}:${maxmin}:${maxsec}Z)
 
 # centroid
 meanlat=$(awk '{ total += $1 } END { print total/NR }' lat.temp)
@@ -131,8 +108,8 @@ if (( $(echo "$meanlon > 180." | bc -l) )); then
 fi
 
 # print file
-printf "$expocode\t$firstlat\t$firstlon\t$lastlat\t$lastlon\t$maxlat\t$minlat\t$maxlon\t$minlon\t$meanlat\t$meanlon\t$mindate\t$maxdate\n" >> SOCATv${SOCATv}_ALL_ABCDE_InpEvents_FirstLastPosition.txt
+printf "$expocode\t$firstlat\t$firstlon\t$lastlat\t$lastlon\t$maxlat\t$minlat\t$maxlon\t$minlon\t$meanlat\t$meanlon\t$firstdate\t$lastdate\n" >> SOCATv${SOCATv}_ALL_ABCDE_InpEvents_FirstLastPosition.txt
 
 done
 
-rm header firstline lastline data.temp lat.temp lon.temp year.temp month.temp day.temp hour.temp min.temp sec.temp
+rm header firstline lastline data.temp lat.temp lon.temp
