@@ -43,3 +43,7 @@ rsconnect/
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+# temporary files
+*.swp
+*.m~

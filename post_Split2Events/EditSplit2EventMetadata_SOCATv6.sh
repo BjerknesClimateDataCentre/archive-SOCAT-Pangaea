@@ -2,8 +2,10 @@
 
 #dir='/Users/rpr061/Dropbox/SOCATv6/Archive_Pangaea/Split2Events/Input_Datafiles_per_basis/'
 #dir='/Users/rpr061/Dropbox/SOCATv6/Archive_Pangaea/Split2Events/test/'
-dir='/Users/rpr061/Documents/DATAMANAGEMENT/Data_products/SOCAT/V6/SOCATv6_local/Archive_SOCATv6/merged_datasets/'
-basisdir='/Users/rpr061/Documents/DATAMANAGEMENT/Data_products/SOCAT/V6/SOCATv6_local/Archive_SOCATv6/test/'
+#dir='/Users/rpr061/Documents/DATAMANAGEMENT/Data_products/SOCAT/V6/SOCATv6_local/Archive_SOCATv6/merged_datasets/'
+#basisdir='/Users/rpr061/Documents/DATAMANAGEMENT/Data_products/SOCAT/V6/SOCATv6_local/Archive_SOCATv6/test/'
+dir='/Users/rpr061/Documents/localtestarea/SOCATv2019Pangaea/'
+basisdir='/Users/rpr061/Documents/localtestarea/SOCATv2019Pangaea/'
 
 cd $dir
 for metadatafile in ${dir}*_metadata.txt; do
@@ -19,14 +21,14 @@ echo $basis
 # Remove empty brackets next to Salinity
 sed -i '.bak' 's/Salinity \[\]/Salinity/g' ${metadatafile}; rm ${metadatafile}.bak
 
-# Datasets author
-linenum=$(grep -n ${basis} ${basisdir}Basis_PI.txt | head -n 1 | cut -d: -f1)
-PI=$(grep -n ${basis} ${basisdir}Basis_PI.txt | head -n 1 | cut -d$'\t' -f2)
-echo ${linenum}
-#PI= $(awk -v ln=$linenum 'BEGIN{FS=OFS="\t"}; FNR==ln; {print $2}' ${dir}Basis_PI.txt)
-echo $PI
-awk -v PId=$PI 'BEGIN{FS=OFS="\t"} FNR==7,FNR==11{$3=PId};1' ${metadatafile} > tmp && mv tmp ${metadatafile}
-awk -v PId=$PI 'BEGIN{FS=OFS="\t"} FNR==22{$3=PId};1' ${metadatafile} > tmp && mv tmp ${metadatafile}
+## Datasets author -> CORRECTED IN EDITSPLIT2EVENTDATA.SH
+#linenum=$(grep -n ${basis} ${basisdir}Basis_PI.txt | head -n 1 | cut -d: -f1)
+#PI=$(grep -n ${basis} ${basisdir}Basis_PI.txt | head -n 1 | cut -d$'\t' -f2)
+#echo ${linenum}
+##PI= $(awk -v ln=$linenum 'BEGIN{FS=OFS="\t"}; FNR==ln; {print $2}' ${dir}Basis_PI.txt)
+#echo $PI
+#awk -v PId=$PI 'BEGIN{FS=OFS="\t"} FNR==7,FNR==11{$3=PId};1' ${metadatafile} > tmp && mv tmp ${metadatafile}
+#awk -v PId=$PI 'BEGIN{FS=OFS="\t"} FNR==22{$3=PId};1' ${metadatafile} > tmp && mv tmp ${metadatafile}
 
 # Common Authors
 # Set geocode and calculated parameters PI ID to not_given (506); fCO2 rec PI is Are Olsen 

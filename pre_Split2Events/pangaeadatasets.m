@@ -7,13 +7,13 @@ close all
 tic
 
 wd1 = '/Users/rpr061/Dropbox/SOCATv6/Archive_Pangaea/WIP_Preparation_docs/';
-wd = '/Users/rpr061/Documents/DATAMANAGEMENT/Data_products/SOCAT/V6/SOCATv6_local/Archive_SOCATv6/SOCATv6All_SocatEnhancedData/';
-wdout= '/Users/rpr061/Documents/DATAMANAGEMENT/Data_products/SOCAT/V6/SOCATv6_local/Archive_SOCATv6/merged_datasets/';
+wd = '/Users/rpr061/Dropbox/BCDC_DataProducts/SOCAT/SOCATv2019/SOCATv2019v7All_ABCDE_enhanced_datafiles/';
+wdout= '/Users/rpr061/Documents/localtestarea/SOCATv2019Pangaea/';
 
 
 %% Read New and Updated lists
-filenameN = [wd1,'ListNew.tsv'];
-filenameU = [wd1,'ListUpdated.tsv'];
+filenameN = [wdout,'ListNew.tsv'];
+filenameU = [wdout,'ListUpdated.tsv'];
 
 delimiter = '\t';
 startRow = 1;
@@ -29,49 +29,72 @@ fclose(fileID);
 NewEvents=NewEvents{1,1}; NewEvents=strtrim(NewEvents);
 UpdatedEvents=UpdatedEvents{1,1}; UpdatedEvents=strtrim(UpdatedEvents);
 
-splitNewEvents=regexp(NewEvents, '\-', 'split');
-for ind=1:length(NewEvents);
-    if length(splitNewEvents{ind,1})>2
-        NewDatasets{ind,1}=[splitNewEvents{ind,1}{1,1},'-',splitNewEvents{ind,1}{1,2}];
-    else
-        NewDatasets(ind,1)=splitNewEvents{ind,1}(1,1); end
-end
+NewDatasets=NewEvents;
+UpdatedDatasets=UpdatedEvents;
 
-% Some events were renamed 316420150622!
 
-splitUpdatedEvents=regexp(UpdatedEvents, '\-', 'split');
-for ind=1:length(UpdatedEvents);
-    if length(splitUpdatedEvents{ind,1})>2
-        UpdatedDatasets{ind,1}=[splitUpdatedEvents{ind,1}{1,1},'-',splitUpdatedEvents{ind,1}{1,2}];
-    else
-        UpdatedDatasets(ind,1)=splitUpdatedEvents{ind,1}(1,1); end
-end
+%% WHY ON EARTH WOULD I ELIMINATE THE -1 / -2 ???
+% splitNewEvents=regexp(NewEvents, '\-', 'split');
+% for ind=1:length(NewEvents);
+%     if length(splitNewEvents{ind,1})>2
+%         NewDatasets{ind,1}=[splitNewEvents{ind,1}{1,1},'-',splitNewEvents{ind,1}{1,2}];
+%     else
+%         NewDatasets(ind,1)=splitNewEvents{ind,1}(1,1); end
+% end
+% 
+% % Some events were renamed 316420150622!
+% 
+% splitUpdatedEvents=regexp(UpdatedEvents, '\-', 'split');
+% for ind=1:length(UpdatedEvents);
+%     if length(splitUpdatedEvents{ind,1})>2
+%         UpdatedDatasets{ind,1}=[splitUpdatedEvents{ind,1}{1,1},'-',splitUpdatedEvents{ind,1}{1,2}];
+%     else
+%         UpdatedDatasets(ind,1)=splitUpdatedEvents{ind,1}(1,1); end
+% end
 
 %% Get lists of data
 
 AllDataFiles=dir([wd,'/**/*.tsv']);
-% .name has the name of the FILE (with "_SOCAT_bundle"). Create .namedata
+% .name has the name of the FILE (with "_SOCAT_bundle/enhanced)"). Create .namedata
 % for expocode only
 for ind=1:length(AllDataFiles);
     namelong=AllDataFiles(ind).name;
     namesplit=strsplit(namelong, '_');
     AllDataFiles(ind).namedata=namesplit{1};
 end
-% THIS IS ASSUMING HEADERS DO NOT CHANGE!!!
+
 headerPangaea={'','','','','','','','','','',...
-    'LONGITUDE','LATITUDE','DEPTH, water [m]','Salinity',['Temperature, water [',char(0176),'C]'],...
-    ['Temperature at equilibration [',char(0176),'C]'],'Pressure, atmospheric [hPa]',...
-    'Pressure at equilibration [hPa]','Salinity, interpolated',...
-    'Pressure, atmospheric, interpolated [hPa]','Depth, bathymetric, interpolated/gridded [m]',...
-    'Distance [km]',['xCO2 (air), interpolated [',char(181),'mol/mol]'],...
-    ['xCO2 (water) at equilibrator temperature (dry air) [',char(181),'mol/mol]'],...
-    ['xCO2 (water) at sea surface temperature (dry air) [',char(181),'mol/mol]'],...
-    ['Partial pressure of carbon dioxide (water) at equilibrator temperature (wet air) [',char(181),'atm]'],...
-    ['Partial pressure of carbon dioxide (water) at sea surface temperature (wet air) [',char(181),'atm]'],...
-    ['Fugacity of carbon dioxide (water) at equilibrator temperature (wet air) [',char(181),'atm]'],...
-    ['Fugacity of carbon dioxide (water) at sea surface temperature (wet air) [',char(181),'atm]'],...
-    ['Fugacity of carbon dioxide (water) at sea surface temperature (wet air) [',char(181),'atm]'],...
-    'Algorithm','Quality flag [#]'};
+    '1601','1600','1619','716','717',...
+    '48924','2224',...
+    '48925','102735',...
+    '102736','102737',...
+    '21453','124243',...
+    '49310',...
+    '49314',...
+    '102734',...
+    '49313',...
+    '102733',...
+    '49312',...
+    '49312',...
+    '124244','7635'};
+
+% SOMEONE TOUCHED SOMETHING IN PANGAEA AND Split2Events DOES NOT RECOGNIZE
+% DEGREES AND MU ANYMORE!!!
+% % THIS IS ASSUMING HEADERS DO NOT CHANGE!!!
+% headerPangaea={'','','','','','','','','','',...
+%     'LONGITUDE','LATITUDE','DEPTH, water [m]','Salinity',['Temperature, water [',char(0176),'C]'],...
+%     ['Temperature at equilibration [',char(0176),'C]'],'Pressure, atmospheric [hPa]',...
+%     'Pressure at equilibration [hPa]','Salinity, interpolated',...
+%     'Pressure, atmospheric, interpolated [hPa]','Depth, bathymetric, interpolated/gridded [m]',...
+%     'Distance [km]',['xCO2 (air), interpolated [',char(181),'mol/mol]'],...
+%     ['xCO2 (water) at equilibrator temperature (dry air) [',char(181),'mol/mol]'],...
+%     ['xCO2 (water) at sea surface temperature (dry air) [',char(181),'mol/mol]'],...
+%     ['Partial pressure of carbon dioxide (water) at equilibrator temperature (wet air) [',char(181),'atm]'],...
+%     ['Partial pressure of carbon dioxide (water) at sea surface temperature (wet air) [',char(181),'atm]'],...
+%     ['Fugacity of carbon dioxide (water) at equilibrator temperature (wet air) [',char(181),'atm]'],...
+%     ['Fugacity of carbon dioxide (water) at sea surface temperature (wet air) [',char(181),'atm]'],...
+%     ['Fugacity of carbon dioxide (water) at sea surface temperature (wet air) [',char(181),'atm]'],...
+%     'Algorithm','Quality flag [#]'};
 
 % for loop through files
 
@@ -96,15 +119,15 @@ for ifiles=1:length(AllDataFiles);
         currentevent=NewEvents{indexN};
     else; isNew=0; end
     
-    % Exception for changes in expocode, but old event
-    if strcmp(AllDataFiles(ifiles).namedata,'33RO20071215');
-        [isUpdated,indexU]=ismember('33RO20080102',UpdatedDatasets);
-    elseif strcmp(AllDataFiles(ifiles).namedata,'33RO20081014');
-        [isUpdated,indexU]=ismember('33RO20081018',UpdatedDatasets);
-    else
+ %   % Exception for changes in expocode, but old event
+ %if strcmp(AllDataFiles(ifiles).namedata,'33RO20071215');
+ %       [isUpdated,indexU]=ismember('33RO20080102',UpdatedDatasets);
+ %   elseif strcmp(AllDataFiles(ifiles).namedata,'33RO20081014');
+ %       [isUpdated,indexU]=ismember('33RO20081018',UpdatedDatasets);
+ %   else
         [isUpdated,indexU]=ismember(AllDataFiles(ifiles).namedata,UpdatedDatasets);
-        
-    end
+ %       
+ %   end
     
     if isUpdated;
         filecounterU=filecounterU+1;

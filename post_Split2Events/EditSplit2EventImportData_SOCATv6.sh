@@ -1,19 +1,25 @@
 #!/bin/bash
 
-s2edir='/Users/rpr061/Documents/DATAMANAGEMENT/Data_products/SOCAT/V6/SOCATv6_local/Archive_SOCATv6/merged_datasets/splitted_imp/'
+s2edir='/Users/rpr061/Documents/localtestarea/SOCATv2019Pangaea/splitted_imp/'
+#DATAMANAGEMENT/Data_products/SOCAT/V6/SOCATv6_local/Archive_SOCATv6/merged_datasets/splitted_imp/'
+#s2edir='/Users/rpr061/Documents/DATAMANAGEMENT/Data_products/SOCAT/V6/SOCATv6_local/Archive_SOCATv6/merged_datasets/splitted_imp/'
 #s2edir='/Users/rpr061/Documents/DATAMANAGEMENT/Data_products/SOCAT/V6/SOCATv6_local/Archive_SOCATv6/test/Data_per_Basis/splitted_imp/'
 #dir='/Users/rpr061/Dropbox/SOCATv6/Archive_Pangaea/Split2Events/test/'
 sumdir=''
+#summaryfile='
+cd $s2edir
+cd ..
 
+infofile=Overview_New_Updated_SOCATv2019.tsv
 
 # Find column index of needed variables
-iStaffID=$(sed -n $'1s/\t/\\\n/gp' Overview_New_Updated_SOCATv6.txt | grep -nx 'Pangaea_Staff_ID(s)' | cut -d: -f1)
-iInstID=$(sed -n $'1s/\t/\\\n/gp' Overview_New_Updated_SOCATv6.txt | grep -nx 'Pangaea_Staff_1_Institution_ID' | cut -d: -f1)
-iTitle=$(sed -n $'1s/\t/\\\n/gp' Overview_New_Updated_SOCATv6.txt | grep -nx 'Dataset_title' | cut -d: -f1)
-iComment=$(sed -n $'1s/\t/\\\n/gp' Overview_New_Updated_SOCATv6.txt | grep -nx 'Dataset_comment' | cut -d: -f1)
-iOtherVID=$(sed -n $'1s/\t/\\\n/gp' Overview_New_Updated_SOCATv6.txt | grep -nx 'Other_version_reference_ID' | cut -d: -f1)
-iFileName=$(sed -n $'1s/\t/\\\n/gp' Overview_New_Updated_SOCATv6.txt | grep -nx 'Export_filename' | cut -d: -f1)
-iSourceDataID=$(sed -n $'1s/\t/\\\n/gp' Overview_New_Updated_SOCATv6.txt | grep -nx 'Source_dataset_reference_ID' | cut -d: -f1)
+iStaffID=$(sed -n $'1s/\t/\\\n/gp' ${infofile} | grep -nx 'Pangaea_Staff_ID(s)' | cut -d: -f1)
+iInstID=$(sed -n $'1s/\t/\\\n/gp' ${infofile} | grep -nx 'Pangaea_Staff_1_Institution_ID' | cut -d: -f1)
+iTitle=$(sed -n $'1s/\t/\\\n/gp' ${infofile} | grep -nx 'Dataset_title' | cut -d: -f1)
+iComment=$(sed -n $'1s/\t/\\\n/gp' ${infofile} | grep -nx 'Dataset_comment' | cut -d: -f1)
+iOtherVID=$(sed -n $'1s/\t/\\\n/gp' ${infofile} | grep -nx 'Other_version_ID' | cut -d: -f1)
+iFileName=$(sed -n $'1s/\t/\\\n/gp' ${infofile} | grep -nx 'Export_filename' | cut -d: -f1)
+iSourceDataID=$(sed -n $'1s/\t/\\\n/gp' ${infofile} | grep -nx 'Source_dataset_ID' | cut -d: -f1)
 
 counter=0
 #filename=${s2edir}${event}.txt
@@ -33,11 +39,17 @@ fi
 filenameext=${filename##*/}
 event=${filenameext%%.*}
 
-sumlinenumber=$(grep -n $event Overview_New_Updated_SOCATv6.txt | cut -d: -f1)
-sumline=$(grep $event Overview_New_Updated_SOCATv6.txt)
+sumlinenumber=$(grep -n $event ${infofile} | cut -d: -f1)
+sumline=$(grep $event ${infofile})
+
+# Temporary fix for the event
+ievent=$(sed -n $'1s/\t/\\\n/gp' ${infofile} | grep -nx 'Pangaea_Event' | cut -d: -f1)
+eventname=$(grep $event ${infofile} | awk -v col=$ievent 'BEGIN{FS=OFS="\t"} {print $col}' | sed 's/;/,/g')
+sed -i '.bak' "s/\"EventLabel\": \".*\",/\"EventLabel\": \"${eventname}\",/g" $filename
+
 
 # Staff ID
-sumStaffID=$(grep $event Overview_New_Updated_SOCATv6.txt | awk -v col=$iStaffID 'BEGIN{FS=OFS="\t"} {print $col}' | sed 's/;/,/g')
+sumStaffID=$(grep $event ${infofile} | awk -v col=$iStaffID 'BEGIN{FS=OFS="\t"} {print $col}' | sed 's/;/,/g')
 s2eStaffID=$(grep 'AuthorIDs' $filename | cut -d"[" -f2 | cut -d"]" -f1 | sed 's/ //g')
 if [ "${sumStaffID}" != "${s2eStaffID}" ]; then 
       echo "not the same Authors. $event"; 
@@ -45,7 +57,7 @@ if [ "${sumStaffID}" != "${s2eStaffID}" ]; then
 fi
 
 # Source (PI1 Institution)
-sumInstID=$(grep $event Overview_New_Updated_SOCATv6.txt | awk -v col=$iInstID 'BEGIN{FS=OFS="\t"} {print $col}')
+sumInstID=$(grep $event ${infofile} | awk -v col=$iInstID 'BEGIN{FS=OFS="\t"} {print $col}')
 s2eInstID=$(grep 'SourceID' $filename | cut -d: -f2 | sed 's/[ ,]//g')
 if [ "${sumInstID}" != "${s2eInstID}" ]; then 
       echo "not the same Source. $event"; 
@@ -53,7 +65,7 @@ if [ "${sumInstID}" != "${s2eInstID}" ]; then
 fi
 
 # Dataset Title
-sumTitle=$(grep $event Overview_New_Updated_SOCATv6.txt | awk -v col=$iTitle 'BEGIN{FS=OFS="\t"} {print $col}')
+sumTitle=$(grep $event ${infofile} | awk -v col=$iTitle 'BEGIN{FS=OFS="\t"} {print $col}')
 s2eTitle=$(grep 'Title' $filename | cut -d: -f2 | sed 's/^ \"//g' |sed 's/[,"]//g')
 if [ "${sumTitle}" != "${s2eTitle}" ]; then 
       echo "not the same Title. $event"; 
@@ -61,7 +73,7 @@ if [ "${sumTitle}" != "${s2eTitle}" ]; then
 fi
 
 # Dataset Comment
-sumComment=$(grep $event Overview_New_Updated_SOCATv6.txt | awk -v col=$iComment 'BEGIN{FS=OFS="\t"} {print $col}')
+sumComment=$(grep $event ${infofile} | awk -v col=$iComment 'BEGIN{FS=OFS="\t"} {print $col}')
 s2eComment=$(grep 'DataSetComment' $filename | cut -d: -f2 | sed 's/^ \"//g' |sed 's/[,"]//g')
 if [ "${sumComment}" != "${s2eComment}" ]; then 
       echo "not the same Comment. $event"; 
@@ -69,7 +81,7 @@ if [ "${sumComment}" != "${s2eComment}" ]; then
 fi
 
 # Other version ID (bundle; RelationTypeID=12)
-sumOtherVID=$(grep $event Overview_New_Updated_SOCATv6.txt | awk -v col=$iOtherVID 'BEGIN{FS=OFS="\t"} {print $col}')
+sumOtherVID=$(grep $event ${infofile} | awk -v col=$iOtherVID 'BEGIN{FS=OFS="\t"} {print $col}')
 s2eOtherVID=$(grep '"RelationTypeID": 12' $filename | cut -d: -f2 | sed 's/^ //g' | sed 's/,.*//g')
 if [ "${sumOtherVID}" != "${s2eOtherVID}" ]; then 
       echo "not the same Other Version. $event"; 
@@ -77,7 +89,7 @@ if [ "${sumOtherVID}" != "${s2eOtherVID}" ]; then
 fi
 
 # Source Data Set if available
-sumSourceDataID=$(grep $event Overview_New_Updated_SOCATv6.txt | awk -v col=$iSourceDataID 'BEGIN{FS=OFS="\t"} {print $col}')
+sumSourceDataID=$(grep $event ${infofile} | awk -v col=$iSourceDataID 'BEGIN{FS=OFS="\t"} {print $col}')
 if [ ! -z "${sumSourceDataID}" ]; then
       echo "Add Source Data ID. $event"
       sed -i '.bak' "s/RelationTypeID\": 13 } \],/RelationTypeID\": 13 \},\\
@@ -85,7 +97,7 @@ if [ ! -z "${sumSourceDataID}" ]; then
 fi
 
 # Export file name
-sumFileName=$(grep $event Overview_New_Updated_SOCATv6.txt | awk -v col=$iFileName 'BEGIN{FS=OFS="\t"} {print $col}')
+sumFileName=$(grep $event ${infofile} | awk -v col=$iFileName 'BEGIN{FS=OFS="\t"} {print $col}')
 s2eFileName=$(grep 'ExportFilename' $filename | cut -d: -f2 | sed 's/^ \"//g' |sed 's/[,"]//g')
 if [ "${sumFileName}" != "${s2eFileName}" ]; then 
       echo "not the same Filename. $event"; 
