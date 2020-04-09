@@ -3,22 +3,19 @@
 # ANADIR CALCULO DE LONGITUD DE 360 A +-180!!!
 
 
-SOCATv=6
+SOCATv=2019
 # Root directory of SOCAT files
-#wd=/Users/rpr061/Documents/DATAMANAGEMENT/Pangaea/Archive_SOCATv6/SOCATv6Only_SOCATBundles
-#wd=/Users/rpr061/Documents/DATAMANAGEMENT/Data_products/SOCAT/V6/SOCATv6_local/Archive_SOCATv6/SOCATv6All_SocatEnhancedData
-wd=/Users/rpr061/Documents/DATAMANAGEMENT/Data_products/SOCAT/V6/SOCATv6_local/Archive_SOCATv6/SOCATv6Only_SOCATBundles
+wd=/Users/rpr061/Downloads/SOCATv2019All_ABCDE_enhanced_datafiles
+cd ${wd}/..
 
 # If script has been run before and not clean up (e.g. testing), remove previous files
-if [ -f SOCATv${SOCATv}_InpEvents_FirstLastPosition.txt ]; then
-      rm filedirlist SOCATv${SOCATv}_InpEvents_FirstLastPosition.txt header firstline lastline
+if [ -f SOCATv${SOCATv}_ALL_ABCDE_InpEvents_FirstLastPosition.txt ]; then
+      rm filedirlist SOCATv${SOCATv}_ALL_ABCDE_InpEvents_FirstLastPosition.txt header firstline lastline
 fi
-
-
 
 #cd $wd
 
-# Unzip all
+# Unzip all. Sometimes it does no need to
 # find . -name '*.zip' -exec sh -c 'unzip -o -d "${0%.*}" "$0"' '{}' ';'
 
 # List of all the .tsv files (SOCAT files)
@@ -29,11 +26,10 @@ filedirlist=()
 while IFS= read -r -d $'\0'; do filedirlist+=("$REPLY"); done < <(find $wd -name "*.tsv" ! -path "*.zip" -print0)
 
 # Create output file
-printf "Campaign\tLatitudeEvent\tLongitudeEvent\tLatitudeEvent2\tLongitudeEvent2\tNlim\tSlim\tElim\tWlim\tlatmean\tlonmean\n" >> SOCATv${SOCATv}_InpEvents_FirstLastPosition.txt
+printf "Campaign\tLatitudeEvent\tLongitudeEvent\tLatitudeEvent2\tLongitudeEvent2\tNlim\tSlim\tElim\tWlim\tlatmean\tlonmean\tStartDate\tEndDate\n" >> SOCATv${SOCATv}_ALL_ABCDE_InpEvents_FirstLastPosition.txt
 
 
 # Loop through
-#for ifile in $(seq 0 1); do
 for ifile in $(seq 0 $((${#filedirlist[@]} -1))); do
       filedir=${filedirlist[$ifile]}
       filename=${filedir##*/}
@@ -48,6 +44,12 @@ sed ${headerline}'q;d' $filedir > header
 # Find which columns have latitude and longitude 
 latcol=$(awk -v RS='\t' '/latitude/{print NR; exit}' header)
 loncol=$(awk -v RS='\t' '/longitude/{print NR; exit}' header)
+yearcol=$(awk -v RS='\t' '/yr/{print NR; exit}' header)
+monthcol=$(awk -v RS='\t' '/mon/{print NR; exit}' header)
+daycol=$(awk -v RS='\t' '/day/{print NR; exit}' header)
+hourcol=$(awk -v RS='\t' '/hh/{print NR; exit}' header)
+mincol=$(awk -v RS='\t' '/mm/{print NR; exit}' header)
+seccol=$(awk -v RS='\t' '/ss/{print NR; exit}' header)
 
 #echo $latcol $loncol
 
@@ -55,12 +57,26 @@ loncol=$(awk -v RS='\t' '/longitude/{print NR; exit}' header)
 sed $((${headerline} +1))'q;d' $filedir > firstline
 firstlat=$(awk -v awklatcol=$latcol '{print $awklatcol}' firstline) || { echo 'awk failed ' $expocode ; exit 1; }
 firstlon=$(awk -v awkloncol=$loncol '{print $awkloncol}' firstline)
+firstyear=$(awk -v awkyearcol=$yearcol '{print $awkyearcol}' firstline)
+firstmonth=$(awk -v awkmonthcol=$monthcol '{print $awkmonthcol}' firstline)
+firstday=$(awk -v awkdaycol=$daycol '{print $awkdaycol}' firstline)
+firsthour=$(awk -v awkhourcol=$hourcol '{print $awkhourcol}' firstline)
+firstmin=$(awk -v awkmincol=$mincol '{print $awkmincol}' firstline)
+firstsec=$(awk -v awkseccol=$seccol '{print $awkseccol}' firstline)
 
 # Extract last line
 tail -n 1 $filedir > lastline
 lastlat=$(awk -v awklatcol=$latcol '{print $awklatcol}' lastline)
 lastlon=$(awk -v awkloncol=$loncol '{print $awkloncol}' lastline)
+lastyear=$(awk -v awkyearcol=$yearcol '{print $awkyearcol}' lastline)
+lastmonth=$(awk -v awkmonthcol=$monthcol '{print $awkmonthcol}' lastline)
+lastday=$(awk -v awkdaycol=$daycol '{print $awkdaycol}' lastline)
+lasthour=$(awk -v awkhourcol=$hourcol '{print $awkhourcol}' lastline)
+lastmin=$(awk -v awkmincol=$mincol '{print $awkmincol}' lastline)
+lastsec=$(awk -v awkseccol=$seccol '{print $awkseccol}' lastline)
 
+firstdate=$(echo ${firstyear}-${firstmonth}-${firstday}T${firsthour}:${firstmin}:$(echo ${firstsec} | cut -d'.' -f1)Z)
+lastdate=$(echo ${lastyear}-${lastmonth}-${lastday}T${lasthour}:${lastmin}:$(echo ${lastsec} | cut -d'.' -f1)Z)
 
 # Extract dataset to temporary file; then extract lat and lon columns
 #THIS LINE IS WRONG!!!
@@ -83,6 +99,7 @@ if (( $(echo "$maxlon > 180." | bc -l) )); then
       maxlon=$(echo "${maxlon} - 360." | bc)
 fi
 
+
 # centroid
 meanlat=$(awk '{ total += $1 } END { print total/NR }' lat.temp)
 meanlon=$(awk '{ total += $1 } END { print total/NR }' lon.temp)
@@ -91,7 +108,7 @@ if (( $(echo "$meanlon > 180." | bc -l) )); then
 fi
 
 # print file
-printf "$expocode\t$firstlat\t$firstlon\t$lastlat\t$lastlon\t$maxlat\t$minlat\t$maxlon\t$minlon\t$meanlat\t$meanlon\n" >> SOCATv${SOCATv}_InpEvents_FirstLastPosition.txt
+printf "$expocode\t$firstlat\t$firstlon\t$lastlat\t$lastlon\t$maxlat\t$minlat\t$maxlon\t$minlon\t$meanlat\t$meanlon\t$firstdate\t$lastdate\n" >> SOCATv${SOCATv}_ALL_ABCDE_InpEvents_FirstLastPosition.txt
 
 done
 
